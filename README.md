@@ -11,3 +11,5 @@ mange ting som kunne blitt gjort annerledes. eksempelvis
 - skrevet tester for å sjekke at funksjoner gjør som de skal
   - burde ha én test per opcode for å se om den i isolasjon gjør det den skal. da kan du sammenlikne minne direkte
 - finn en superenkel ROM og ha som mål å få den til å kjøre grønt
+
+[todo](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)
