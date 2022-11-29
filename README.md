@@ -1,5 +1,7 @@
 # chip8
 
+[referanse](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#Bnnn)
+
 en implementasjon av chip8. varmer opp til gb
 
 mange ting som kunne blitt gjort annerledes. eksempelvis
