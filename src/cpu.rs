@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read};
 
-use crate::opcode::Opcode;
+use crate::opcode::{Opcode, Operation};
 
 const MEMORY_SIZE: usize = 1024 * 4;
 const ROM_START_ADDRESS: usize = 0x200;
@@ -40,8 +40,8 @@ impl Chip {
             return;
         }
 
-        let opcode = self.fetch_opcode();
-        self.execute_opcode(opcode);
+        let opcode = Opcode::from(self.fetch_opcode());
+        self.execute_operation(Operation::from(opcode));
     }
 
     fn fetch_opcode(&self) -> u16 {
@@ -55,45 +55,14 @@ impl Chip {
         opcode
     }
 
-    fn execute_opcode(&mut self, opcode: u16) {
-        let opcode = Opcode::from(opcode);
-
-        match opcode.value {
-            0x00e0 => {
-                println!("[*] Clear the screen");
-                self.next_instruction();
-            }
-            0x00ee => {
-                println!("[*] Return from subroutine");
-                let stack_top = self.stack.pop().unwrap();
-                self.program_counter = stack_top as usize;
-            }
-            0x1000..=0x1FFF => {
-                println!("[*] Jump to address: {:#X}", opcode._nnn());
-                self.program_counter = opcode._nnn() as usize;
-            }
-            0x2000..=0x2FFF => {
-                println!("[*] Call subroutine at address {:#X}", opcode._nnn());
-                self.stack.push(self.program_counter as u16);
-                self.program_counter = opcode._nnn() as usize;
-            }
-            0xb000..=0xbFFF => {
-                println!("[*] Jump to address {:#X} + V0", opcode._nnn());
-                self.program_counter = (opcode._nnn() + self.registers[0] as u16) as usize;
-            }
-            0xc000..=0xcfff => {
-                println!(
-                    "[*] Set register V{:X} to random number AND {:#X}",
-                    opcode._x__(),
-                    opcode.__nn()
-                );
-                self.registers[opcode._x__() as usize] = rand::random::<u8>() & (opcode.__nn());
-                self.next_instruction();
-            }
-            _ => {
-                println!("[?] Unknown opcode: {:#X}", opcode.value);
-                self.next_instruction();
-            }
+    fn execute_operation(&mut self, operation: Operation) {
+        match operation {
+            Operation::ClearScreen => self.clear_screen(),
+            Operation::Jump(address) => self.jump(address),
+            Operation::SetRegister(register, value) => self.set_register(register, value),
+            Operation::AddRegister(register, value) => self.add_register(register, value),
+            Operation::SetIndexRegister(address) => self.set_index_register(address),
+            Operation::Draw(x, y, height) => self.draw(x, y, height),
         }
     }
 
@@ -142,5 +111,38 @@ impl Chip {
             memory: [0; MEMORY_SIZE],
             loaded_rom: None,
         }
+    }
+
+    fn clear_screen(&mut self) {
+        println!("Clearing screen");
+        self.next_instruction();
+    }
+
+    fn jump(&mut self, address: u16) {
+        println!("Jumping to address: {:#X}", address);
+        self.program_counter = address as usize;
+    }
+
+    fn set_register(&mut self, register: u8, value: u8) {
+        println!("Setting register {} to {}", register, value);
+        self.registers[register as usize] = value;
+        self.next_instruction();
+    }
+
+    fn add_register(&mut self, register: u8, value: u8) {
+        println!("Adding {} to register {}", value, register);
+        self.registers[register as usize] += value;
+        self.next_instruction();
+    }
+
+    fn set_index_register(&mut self, value: u16) {
+        println!("Setting index register to {}", value);
+        self.index_register = value;
+        self.next_instruction();
+    }
+
+    fn draw(&mut self, x: u8, y: u8, nibble: u8) {
+        println!("{},{},{}", x, y, nibble);
+        self.next_instruction();
     }
 }
